@@ -1,0 +1,8 @@
+# Files required to run the app
+app.R
+data/expr_mat_cpm.rds
+data/cell_meta.rds
+data/agg_ephys.rds
+data/agg_gene_cpm_median.rds
+data/gene_list.rds
+data/efeat_list.rds
