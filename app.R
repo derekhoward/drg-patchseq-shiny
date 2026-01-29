@@ -31,7 +31,7 @@ agg_ephys <- readRDS("data/agg_ephys.rds")
 agg_gene_cpm <- readRDS("data/agg_gene_cpm_median.rds")
 gene_list <- readRDS("data/gene_list.rds")
 efeat_list <- readRDS("data/efeat_list.rds")
-integrated_obj <- readRDS("data/drg_integrated.RDS")
+integrated_obj <- readRDS("data/drg_integrated_slim.RDS")
 
 if (!"umap" %in% names(integrated_obj@reductions)) {
   stop("drg_integrated.RDS must include a UMAP reduction named 'umap'.")
@@ -58,6 +58,10 @@ umap_df$is_patch <- umap_df$dataset == "patch"
 umap_df$hover <- paste0(
   "dataset: ", umap_df$dataset_display, "<br>",
   "cell-type: ", umap_df$labels
+)
+umap_limits <- list(
+  x = range(umap_df$UMAP_1, na.rm = TRUE),
+  y = range(umap_df$UMAP_2, na.rm = TRUE)
 )
 
 if (!"labels" %in% colnames(cell_meta)) {
@@ -255,7 +259,7 @@ server <- function(input, output, session) {
       scale_color_manual(values = reference_celltype_colors, na.value = "grey70", name = "Predicted cell types") +
       scale_fill_manual(values = reference_celltype_colors, na.value = "grey70", guide = "none") +
       labs(x = "UMAP 1", y = "UMAP 2") +
-      coord_equal() +
+      coord_equal(xlim = umap_limits$x, ylim = umap_limits$y) +
       theme_minimal(base_size = 11) +
       theme(
         legend.position = "none",
@@ -309,7 +313,8 @@ server <- function(input, output, session) {
 
     p <- p +
       aes(text = hover_text) +
-      labs(title = input$gene) +
+      labs(title = input$gene, x = "UMAP_1", y = "UMAP_2") +
+      coord_equal(xlim = umap_limits$x, ylim = umap_limits$y) +
       theme(
         plot.title = element_text(size = 14, face = "bold", hjust = 0.5, margin = margin(b = 6)),
         plot.title.position = "plot"
