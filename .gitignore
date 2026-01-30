@@ -50,3 +50,7 @@ rsconnect/
 
 # macOS Finder metadata
 .DS_Store
+
+# Large integrated Seurat objects (kept locally for deployment)
+data/drg_integrated.RDS
+data/drg_integrated_slim.RDS

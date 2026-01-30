@@ -70,7 +70,7 @@ if (!"labels" %in% colnames(cell_meta)) {
 
 ui <- navbarPage(
   title = "Patch-seq Explorer",
-  tags$style(HTML("
+  header = tags$style(HTML("
     .plot-note {
       background: #f5f5f5;
       border: 1px solid #e0e0e0;
@@ -101,8 +101,7 @@ ui <- navbarPage(
         selectizeInput(
           "gene",
           "Gene",
-          choices = sort(gene_list),
-          selected = if ("SCN10A" %in% gene_list) "SCN10A" else sort(gene_list)[1]
+          choices = NULL
         ),
         selectizeInput(
           "efeat",
@@ -145,6 +144,16 @@ ui <- navbarPage(
 )
 
 server <- function(input, output, session) {
+  observeEvent(TRUE, {
+    updateSelectizeInput(
+      session,
+      "gene",
+      choices = sort(gene_list),
+      selected = if ("SCN10A" %in% gene_list) "SCN10A" else sort(gene_list)[1],
+      server = TRUE
+    )
+  }, once = TRUE)
+
   selected_data <- reactive({
     req(input$gene, input$efeat)
 
@@ -197,7 +206,7 @@ server <- function(input, output, session) {
       theme_minimal(base_size = 12) +
       theme(legend.position = "right")
 
-    ggplotly(p, tooltip = "text") %>%
+    plot_obj <- ggplotly(p, tooltip = "text") %>%
       layout(
         annotations = list(
           list(
@@ -210,8 +219,11 @@ server <- function(input, output, session) {
             xanchor = "right",
             yanchor = "top"
           )
-        )
+        ),
+        hoverlabel = list(align = "left")
       )
+    plot_obj <- plotly::style(plot_obj, hoverinfo = "text")
+    plotly::toWebGL(plot_obj)
   })
 
   output$violin <- renderPlotly({
@@ -223,7 +235,7 @@ server <- function(input, output, session) {
     )
 
     p <- ggplot(df, aes(x = labels, y = gene_log2p1, color = labels)) +
-      geom_violin(fill = NA, linewidth = 0.6, alpha = 0.6) +
+      geom_boxplot(outlier.shape = NA, linewidth = 0.6, alpha = 0.4) +
       geom_jitter(width = 0.15, alpha = 0.5, size = 1) +
       scale_color_manual(values = reference_celltype_colors, na.value = "grey70", name = "Cell types") +
       labs(x = "Cell types", y = paste0("Gene expr. (log2 CPM+1): ", input$gene)) +
@@ -233,7 +245,7 @@ server <- function(input, output, session) {
         axis.text.x = element_text(angle = 45, hjust = 1)
       )
 
-    ggplotly(p, tooltip = c("y", "x"))
+    plotly::style(ggplotly(p, tooltip = "none"), hoverinfo = "skip")
   })
 
   output$umap <- renderPlotly({
@@ -267,11 +279,13 @@ server <- function(input, output, session) {
         axis.text = element_text(size = 9)
       )
 
-    ggplotly(p, tooltip = "text") %>%
+    plotly::toWebGL(
+      ggplotly(p, tooltip = "text") %>%
       layout(
         margin = list(l = 35, r = 10, t = 10, b = 30),
         hoverlabel = list(align = "left")
       )
+    )
   })
 
   output$feature_umap <- renderPlotly({
@@ -320,11 +334,13 @@ server <- function(input, output, session) {
         plot.title.position = "plot"
       )
 
-    ggplotly(p, tooltip = "text") %>%
+    plotly::toWebGL(
+      ggplotly(p, tooltip = "text") %>%
       layout(
         margin = list(l = 35, r = 10, t = 40, b = 30),
         hoverlabel = list(align = "left")
       )
+    )
   })
 }
 
