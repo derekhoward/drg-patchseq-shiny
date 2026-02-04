@@ -31,7 +31,68 @@ agg_ephys <- readRDS("data/agg_ephys.rds")
 agg_gene_cpm <- readRDS("data/agg_gene_cpm_median.rds")
 gene_list <- readRDS("data/gene_list.rds")
 efeat_list <- readRDS("data/efeat_list.rds")
+efeat_list_ui <- setdiff(efeat_list, c("nCount_RNA", "nFeature_RNA", "input_res"))
 integrated_obj <- readRDS("data/drg_integrated_slim.RDS")
+
+efeat_label_df <- read.csv(
+  "data/230421_Meta_Data_Explanation_with_label.csv",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+names(efeat_label_df) <- trimws(names(efeat_label_df))
+efeat_label_df$Metadata_Name <- trimws(efeat_label_df$Metadata_Name)
+efeat_label_df$label <- trimws(efeat_label_df$label)
+efeat_label_df$Unit <- trimws(efeat_label_df$Unit)
+efeat_label_df$Explanation <- trimws(efeat_label_df$Explanation)
+
+efeat_label_display <- efeat_label_df$label
+efeat_label_display[efeat_label_display == "" | is.na(efeat_label_display)] <-
+  efeat_label_df$Metadata_Name[efeat_label_display == "" | is.na(efeat_label_display)]
+
+normalize_efeat_key <- function(x) {
+  x <- trimws(x)
+  x <- gsub("\\.", " ", x)
+  x <- gsub("\\s+", " ", x)
+  x <- gsub("^X(?=\\d)", "", x, perl = TRUE)
+  tolower(x)
+}
+
+efeat_label_lookup <- stats::setNames(
+  efeat_label_display,
+  normalize_efeat_key(efeat_label_df$Metadata_Name)
+)
+efeat_explanation_lookup <- stats::setNames(
+  efeat_label_df$Explanation,
+  normalize_efeat_key(efeat_label_df$Metadata_Name)
+)
+efeat_unit_lookup <- stats::setNames(
+  efeat_label_df$Unit,
+  normalize_efeat_key(efeat_label_df$Metadata_Name)
+)
+efeat_label_overrides <- c(
+  "Sinus score" = "Sinusscore_old"
+)
+
+efeat_labels <- vapply(
+  efeat_list,
+  function(efeat) {
+    meta_name <- if (efeat %in% names(efeat_label_overrides)) {
+      efeat_label_overrides[[efeat]]
+    } else {
+      efeat
+    }
+    key <- normalize_efeat_key(meta_name)
+    label <- unname(efeat_label_lookup[key])
+    if (length(label) == 0 || is.na(label) || label == "") {
+      efeat
+    } else {
+      label
+    }
+  },
+  character(1)
+)
+efeat_choices <- stats::setNames(efeat_list_ui, efeat_labels[efeat_list_ui])
+efeat_choices <- efeat_choices[order(efeat_choices)]
 
 if (!"umap" %in% names(integrated_obj@reductions)) {
   stop("drg_integrated.RDS must include a UMAP reduction named 'umap'.")
@@ -69,8 +130,18 @@ if (!"labels" %in% colnames(cell_meta)) {
 }
 
 ui <- navbarPage(
-  title = "Patch-seq Explorer",
+  title = "Pig Patch-seq Explorer",
   header = tags$style(HTML("
+    .details-clickable summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #2b2b2b;
+    }
+    .details-clickable summary::after {
+      content: \" ↘\";
+      font-weight: 400;
+      color: #666666;
+    }
     .plot-note {
       background: #f5f5f5;
       border: 1px solid #e0e0e0;
@@ -84,18 +155,18 @@ ui <- navbarPage(
   tabPanel(
     "Home",
     fluidPage(
-      h2("Patch-seq gene expression ↔ electrophysiology feature explorer"),
+      h2("Pig Patch-seq gene expression ↔ electrophysiology feature explorer"),
       p("Use the Gene Search tab to explore gene expression relationships with electrophysiology features and integrated UMAPs."),
       tags$hr(),
       h3("The Data"),
       p("Unlike standard transcriptomics, this study utilizes Patch-seq to link gene expression directly to cellular function. By combining electrophysiological characterization with single-cell sequencing, we have mapped the transcriptomic profile of functionally identified CMis."),
       h3("Our Objective"),
-      p("To characterize the molecular identity of human dermal nociceptors and provide a mechanistic basis for understanding neuropathic pain. This platform integrates our core Patch-seq findings with supporting snRNA-seq data to facilitate the discovery of novel therapeutic targets.")
+      p("To characterize the molecular identity of dermal nociceptors and provide a mechanistic basis for understanding neuropathic pain. This platform integrates our core Patch-seq findings with supporting snRNA-seq data to facilitate the discovery of novel therapeutic targets.")
     )
   ),
   tabPanel(
     "Gene Search",
-    titlePanel("Patch-seq gene expression ↔ electrophysiology feature explorer"),
+    titlePanel("Pig Patch-seq gene expression ↔ electrophysiology feature explorer"),
     sidebarLayout(
       sidebarPanel(
         selectizeInput(
@@ -106,8 +177,14 @@ ui <- navbarPage(
         selectizeInput(
           "efeat",
           "Ephys feature",
-          choices = sort(efeat_list),
-          selected = if ("Rheobase" %in% efeat_list) "Rheobase" else sort(efeat_list)[1]
+          choices = efeat_choices,
+          selected = if ("Rheobase" %in% efeat_list_ui) "Rheobase" else sort(efeat_list_ui)[1]
+        ),
+        div(
+          class = "plot-note",
+          tags$strong("Ephys feature explanation"),
+          tags$br(),
+          textOutput("efeat_explanation")
         ),
         radioButtons(
           "mode",
@@ -154,6 +231,29 @@ server <- function(input, output, session) {
     )
   }, once = TRUE)
 
+  output$efeat_explanation <- renderText({
+    req(input$efeat)
+    meta_name <- if (input$efeat %in% names(efeat_label_overrides)) {
+      efeat_label_overrides[[input$efeat]]
+    } else {
+      input$efeat
+    }
+    key <- normalize_efeat_key(meta_name)
+    unit <- unname(efeat_unit_lookup[key])
+    explanation <- unname(efeat_explanation_lookup[key])
+    has_unit <- length(unit) > 0 && !is.na(unit) && unit != ""
+    has_explanation <- length(explanation) > 0 && !is.na(explanation) && explanation != ""
+    if (has_explanation && has_unit) {
+      paste0(explanation, " Unit: ", unit, ".")
+    } else if (has_explanation) {
+      explanation
+    } else if (has_unit) {
+      paste0("Unit: ", unit, ".")
+    } else {
+      "No description available for this feature."
+    }
+  })
+
   selected_data <- reactive({
     req(input$gene, input$efeat)
 
@@ -179,7 +279,8 @@ server <- function(input, output, session) {
         check.names = FALSE
       )
     }
-  })
+  }) |>
+    bindCache(input$gene, input$efeat, input$mode)
 
   output$scatter <- renderPlotly({
     df <- selected_data()
@@ -224,7 +325,8 @@ server <- function(input, output, session) {
       )
     plot_obj <- plotly::style(plot_obj, hoverinfo = "text")
     plotly::toWebGL(plot_obj)
-  })
+  }) |>
+    bindCache(input$gene, input$efeat, input$mode)
 
   output$violin <- renderPlotly({
     req(input$gene)
@@ -246,7 +348,8 @@ server <- function(input, output, session) {
       )
 
     plotly::style(ggplotly(p, tooltip = "none"), hoverinfo = "skip")
-  })
+  }) |>
+    bindCache(input$gene)
 
   output$umap <- renderPlotly({
     snrna_df <- umap_df[!umap_df$is_patch, , drop = FALSE]
@@ -341,7 +444,8 @@ server <- function(input, output, session) {
         hoverlabel = list(align = "left")
       )
     )
-  })
+  }) |>
+    bindCache(input$gene)
 }
 
 shinyApp(ui, server)

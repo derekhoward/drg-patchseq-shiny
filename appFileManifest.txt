@@ -6,4 +6,5 @@ data/agg_ephys.rds
 data/agg_gene_cpm_median.rds
 data/gene_list.rds
 data/efeat_list.rds
+data/230421_Meta_Data_Explanation_with_label.csv
 data/drg_integrated_slim.RDS

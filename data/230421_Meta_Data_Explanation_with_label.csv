@@ -1,0 +1,45 @@
+Metadata_Name ,Explanation,Unit,Comment ,Pulse Protocol ,label
+Animal ,Index number,,,,Animal index
+age ,,weeks,,,Age
+weight,,kilogram ,,,Weight
+days in dish,starting from animal cardiac arrest ,,,,Days in dish
+diameter,measured in bringhtfield microscopie,µm,,,Cell diameter
+cslow,cell capacitance ,pF,,,Cell capacitance (slow)
+RMP,Resting membrane potential,mV,Correcter for +14.3mv Liquid Junction Potential ,,Resting membrane potential
+pA_start,Current Injection needed for maintaining -60mV ,pA,,Cell held at -60mv. Stepwise rectangular 200ms Current injection. First AP used for feature extraction. ,Start current (holding to -60 mV)
+pA_threshold,Current Injection needed for first AP ,pA,,,Threshold current (first AP)
+Rheobase,pA_threshold - pA_start,pA,,,Rheobase (threshold − start)
+input_res,"Old measurement, can be excluded. ",,,,Input resistance (old)
+Input_res_new,Input resistance ,mOhm ,,,Input resistance
+AP_threshhold ,Potential of spike initiation ,mV,defined as the minimum of the first derivative of the action potential ,,AP threshold voltage
+AP_max,max spike potential ,mV,,,AP peak voltage
+Apamp,spike amplitude,mV,,,AP amplitude
+Min_AHP,minimum afterhyperpolarization,mV,,,Minimum AHP (trough voltage)
+Loc_APHW,Localisation of APD measurement ,mV,,,AP half-width location/time
+APD,Action potential duration ,ms ,half distance between threshold and peak is taken and the distance between this point during depolarization and repolarization is measured,,Action potential duration
+max_slope_raw,max slope between TH and peak,mV/s,,,Max upstroke slope (raw)
+max_slope_smth,smothing factor applied,mV/s,,,Max upstroke slope (smoothed)
+slope_oversh,max slope in overshoot >0mV of AP,mV/s,,,Upstroke overshoot slope
+slope_oversh_0.5,smothing factor applied,mV/s,,,Upstroke overshoot slope (0.5)
+subthresh_slope,max slope between RMP and Threshhold ,mV/s,,,Subthreshold I–V slope
+subthresh_slope_0.5,smothing factor applied,mV/s,,,Subthreshold I–V slope (0.5)
+TTP,The time to peak is the duration between current pulse onset and action potential peak,ms ,,,Time to peak
+Shoulder,"Area of AP Shoulder. No reliable measurement, can be excluded. ",,,,Shoulder
+AHP_new,Kinetics of repolarisation phase,ms , 1 Exponential fit to repolarization phase after AP ,,AHP repolarization kinetics
+AHP_Tau,"Old measurement, can be excluded. ",,,,AHP decay time constant
+RMP_beforeAP,Measured Potential in Spike used for data extraction,mV,QC measure to rule out potential variation as reason for changed spike features ,,RMP Before AP
+2nd_Infliction,"existance of 2nd infliction point in descending phase (""Shoulder"")",binary,,,2nd Infliction
+Spontan_active,spike generation in RMP measurement ,binary,Duration of measurement = 4s ,,Spontaneously active
+2Hz,Number of spikes (0-20) given for each frequency,,,2ms 1000Pa Injection of different velocity up to 100 Hz,2hz
+4Hz,Number of spikes (0-20) given for each frequency,,,,4hz
+10Hz,Number of spikes (0-20) given for each frequency,,,,10hz
+20Hz,Number of spikes (0-20) given for each frequency,,,,20hz
+50Hz,Number of spikes (0-20) given for each frequency,,,,50hz
+100Hz,Number of spikes (0-20) given for each frequency,,,,100hz
+HS_Threshold ,Spike Threshold in half sinus stmilation ,pA,,500ms Half Sinus Shaped Current Injection,High-spiking threshold
+AP_HS_2TH,Number of spikes in doubled half sinus threshold ,,,,Spike count at 2× Half-sinus threshold
+Sinusscore_old ,Sinus Stimulation affinity ,,"Defined as difference in number of Spikes in each protocol -> theoretical max 20 (20 Sinus spikes vs 0 rectangular spikes) , min -20 (20 rectangualr spikes 0 sinus spikes) ",20 4 Hz Sinus Stimulation. 5s Break. 20 4Hz Rectangular Injection of same intensity. Intensitiy was similar or slightly higher as in Std AP pulse protocol. ,Sinus score
+HS_Quotient,Quotient of Threshold Halfsinus/Rectangular,,,500ms Half Sinus Shaped Current Injection: rel TH as quotient to AP Threshold in standart Current Injection Protocol ,High-spiking quotient
+Delta.I.Initial,Relative change in action current maximum in rep. Stimulation ,,Baseline = first Peak. Action current = firstdeviation AP Trace * cSlow (constant) ,75 Hz 1000pa 10ms current injection ,Initial action current change (ΔI)
+Delta.ind.time,Change in TTP duringrep stimulation,ms ,Baseline= first peak ,,Time-dependent index change (Δ)
+Delta.Rmem,Change in resting membrane potential in rep Stimulation ,mv,Baseline= first peak ,,Resting membrane potential change (ΔRMP)
